@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
+use App\Models\User;
+use Illuminate\Http\Request;
+
 
 /**
  * @OA\Info(
@@ -192,26 +195,29 @@ class AuthController extends Controller
      *      )
      * )
      */
+
+
     public function forgotPassword(Request $request)
     {
         $request->validate([
             'email' => 'required|email'
         ]);
 
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        // Vérifier si l'utilisateur existe
+        $user = User::where('email', $request->email)->first();
 
-        if ($status === Password::RESET_LINK_SENT) {
+        if ($user) {
+            // Ici tu pourrais générer un token custom si tu veux
             return response()->json([
-                'message' => 'Lien de réinitialisation envoyé'
+                'message' => 'Un lien de réinitialisation (fictif) a été envoyé à votre adresse email.'
             ]);
         }
 
         return response()->json([
-            'message' => 'Erreur lors de l\'envoi du lien'
-        ], 400);
+            'message' => 'Cet email n\'existe pas dans notre base de données.'
+        ], 404);
     }
+
 
     /**
      * @OA\Post(
@@ -242,31 +248,30 @@ class AuthController extends Controller
      *      )
      * )
      */
+
+
     public function resetPassword(Request $request)
     {
         $request->validate([
-            'token' => 'required',
             'email' => 'required|email',
             'password' => 'required|string|min:8',
         ]);
 
-        $status = Password::reset(
-            $request->only('email', 'password', 'token'),
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password)
-                ])->save();
-            }
-        );
+        // Chercher l'utilisateur par email
+        $user = User::where('email', $request->email)->first();
 
-        if ($status === Password::PASSWORD_RESET) {
+        if (!$user) {
             return response()->json([
-                'message' => 'Mot de passe réinitialisé avec succès'
-            ]);
+                'message' => '❌ Utilisateur introuvable avec cet email.'
+            ], 404);
         }
 
+        // Mise à jour du mot de passe crypté
+        $user->password = Hash::make($request->password);
+        $user->save();
+
         return response()->json([
-            'message' => 'Erreur lors de la réinitialisation'
-        ], 400);
+            'message' => '✅ Mot de passe réinitialisé avec succès.'
+        ]);
     }
 }

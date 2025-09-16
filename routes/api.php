@@ -28,5 +28,5 @@ Route::get('/test', function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::apiResource('hotels', HotelController::class);
-    Route::get('/my-hotels', [HotelController::class, 'myHotels']);
+    Route::get('/my-hotels', [HotelController::class, 'index']);
 });
