@@ -34,6 +34,22 @@ class HotelController extends Controller
     }
 
     /**
+     * Affiche un hôtel spécifique
+     *
+     * @param \App\Models\Hotel $hotel
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show(Hotel $hotel)
+    {
+        // Vérifier que l'hôtel appartient à l'utilisateur authentifié
+        if ($hotel->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        return response()->json($hotel);
+    }
+
+    /**
      * Crée un nouvel hôtel pour l'utilisateur authentifié.
      *
      * @param \Illuminate\Http\Request $request
@@ -77,9 +93,6 @@ class HotelController extends Controller
         ], 201);
     }
 
-    // Le reste de votre code est excellent et n'a pas besoin de modifications majeures
-    // show(), update(), destroy() restent les mêmes
-
     /**
      * Met à jour un hôtel.
      * @param \Illuminate\Http\Request $request
@@ -88,7 +101,40 @@ class HotelController extends Controller
      */
     public function update(Request $request, Hotel $hotel)
     {
-        // ... (votre code existant) ...
+        // Vérifier que l'hôtel appartient à l'utilisateur authentifié
+        if ($hotel->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'price_per_night' => 'required|numeric|min:0',
+            'address' => 'required|string|max:255',
+            'phone_number' => 'required|string|max:20',
+            'currency' => 'required|string|max:3',
+            'is_active' => 'boolean',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        // Gestion de l'upload de la nouvelle photo
+        if ($request->hasFile('photo')) {
+            // Supprimer l'ancienne photo si elle existe
+            if ($hotel->photo) {
+                $this->deletePhoto($hotel->photo);
+            }
+
+            // Uploader la nouvelle photo
+            $validatedData['photo'] = $this->handlePhotoUpload($request->file('photo'));
+        }
+
+        // Mettre à jour l'hôtel
+        $hotel->update($validatedData);
+
+        return response()->json([
+            'message' => 'Hôtel mis à jour avec succès',
+            'hotel' => $hotel->fresh()
+        ], 200);
     }
 
     /**
@@ -98,7 +144,22 @@ class HotelController extends Controller
      */
     public function destroy(Hotel $hotel)
     {
-        // ... (votre code existant) ...
+        // Vérifier que l'hôtel appartient à l'utilisateur authentifié
+        if ($hotel->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        // Supprimer la photo associée si elle existe
+        if ($hotel->photo) {
+            $this->deletePhoto($hotel->photo);
+        }
+
+        // Supprimer l'hôtel de la base de données
+        $hotel->delete();
+
+        return response()->json([
+            'message' => 'Hôtel supprimé avec succès'
+        ], 200);
     }
 
     /**
