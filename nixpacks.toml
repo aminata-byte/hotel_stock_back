@@ -1,0 +1,16 @@
+[phases.install]
+cmds = [
+  "mkdir -p /var/log/nginx && mkdir -p /var/cache/nginx",
+  "composer install --no-scripts --ignore-platform-reqs",
+  "npm install"
+]
+
+[phases.build]
+cmds = [
+  "mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs bootstrap/cache",
+  "chmod -R 775 storage bootstrap/cache",
+  "npm run build",
+  "php artisan config:cache",
+  "php artisan route:cache",
+  "php artisan view:cache"
+]
