@@ -23,6 +23,7 @@ class Cors
             'http://hotel-frontend.local',
             'https://hotel-frontend.local',
             'http://hotel-frontend.test',
+            'https://hotel-frontend',
             'https://hotel-frontend-ck2o.vercel.app',
         ];
 
