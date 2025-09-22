@@ -29,4 +29,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::apiResource('hotels', HotelController::class);
     Route::get('/my-hotels', [HotelController::class, 'index']);
+
+    // Routes pour les statistiques réelles - versions corrigées
+    Route::get('/forms', function () {
+        return response()->json(\App\Models\Form::all());
+    });
+    Route::get('/messages', function () {
+        return response()->json(\App\Models\Message::all());
+    });
+    Route::get('/emails', function () {
+        return response()->json(\App\Models\Email::all());
+    });
+    Route::get('/entities', function () {
+        return response()->json(\App\Models\Entity::all());
+    });
+    Route::get('/users', function () {
+        return response()->json(\App\Models\User::all());
+    });
 });
